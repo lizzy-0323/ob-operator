@@ -100,7 +100,7 @@ export default function ModifyUnitDetailModal({
       form.submit();
     } catch (err) {}
   };
-  const handleCancel = () => {
+  const onCancel = () => {
     if (setEditZone) {
       setEditZone('');
       setSelectZones([]);
@@ -115,8 +115,8 @@ export default function ModifyUnitDetailModal({
       newResourcePool ? 'create' : 'edit',
     );
     const res = await obtenantPoolReq({
-      ns:ns!,
-      name:name!,
+      ns: ns!,
+      name: name!,
       zoneName,
       ...reqData,
     });
@@ -158,9 +158,9 @@ export default function ModifyUnitDetailModal({
     result.unitConfig = {
       cpuCount: zone?.minCPU,
       iopsWeight: zone?.iopsWeight,
-      logDiskSize: zone?.logDiskSize.split('Gi')[0],
+      logDiskSize: zone?.logDiskSize,
       maxIops: zone?.maxIops,
-      memorySize: zone?.memorySize.split('Gi')[0],
+      memorySize: zone?.memorySize,
       minIops: zone?.minIops,
     };
     if (newResourcePool) {
@@ -255,9 +255,9 @@ export default function ModifyUnitDetailModal({
               defaultMessage: '编辑资源池',
             })
       }
-      isOpen={visible}
-      handleOk={handleSubmit}
-      handleCancel={handleCancel}
+      open={visible}
+      onOk={handleSubmit}
+      onCancel={onCancel}
     >
       <Form
         form={form}
@@ -465,7 +465,8 @@ export default function ModifyUnitDetailModal({
                 () => ({
                   validator() {
                     if (
-                      essentialParameter && selectZones.length &&
+                      essentialParameter &&
+                      selectZones.length &&
                       findMinParameter(selectZones, essentialParameter)
                         .maxLogDisk! < minResource.minLogDisk
                     ) {

@@ -1,32 +1,73 @@
+import { access as accessReq } from '@/api';
 import HandleAccountModal from '@/components/customModal/HandleAccountModal';
 import HandleRoleModal from '@/components/customModal/HandleRoleModal';
+import { intl } from '@/utils/intl';
 import { PageContainer } from '@ant-design/pro-components';
+import { useAccess } from '@umijs/max';
+import { useRequest } from 'ahooks';
 import type { TabsProps } from 'antd';
 import { Button, Tabs } from 'antd';
-import { useState } from 'react';
+import { uniq } from 'lodash';
+
+import { useMemo, useState } from 'react';
 import Accounts from './Accounts';
 import Roles from './Roles';
 import { ActiveKey, Type } from './type';
 
 export default function Access() {
   const [activeKey, setActiveKey] = useState<ActiveKey>(ActiveKey.ACCOUNTS);
+  const access = useAccess();
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [accountVisible, setAccountVisible] = useState<boolean>(false);
-
+  const { data: allRolesRes, refresh: refreshRoles } = useRequest(
+    accessReq.listAllRoles,
+  );
+  const { data: allAccountsRes, refresh: refreshAccounts } = useRequest(
+    accessReq.listAllAccounts,
+  );
+  const allRoles = allRolesRes?.data;
+  const allAccounts = allAccountsRes?.data;
   const onChange = (key: ActiveKey) => {
     setActiveKey(key);
   };
+  const existingRoles = useMemo(() => {
+    return (
+      uniq(
+        allAccounts
+          ?.map((account) => account.roles.map((role) => role.name))
+          .flat(),
+      ) || []
+    );
+  }, [allAccounts]);
+
+  const createdRoles = useMemo(() => {
+    return allRoles?.map((item) => item.name) || [];
+  }, [allRolesRes]);
 
   const items: TabsProps['items'] = [
     {
       key: ActiveKey.ACCOUNTS,
-      label: '用户',
-      children: <Accounts />,
+      label: intl.formatMessage({
+        id: 'src.pages.Access.D6457915',
+        defaultMessage: '用户',
+      }),
+      children: (
+        <Accounts allAccounts={allAccounts} refreshAccounts={refreshAccounts} />
+      ),
     },
     {
       key: ActiveKey.ROLES,
-      label: '角色',
-      children: <Roles />,
+      label: intl.formatMessage({
+        id: 'src.pages.Access.FB4D558D',
+        defaultMessage: '角色',
+      }),
+      children: (
+        <Roles
+          allRoles={allRoles}
+          refreshRoles={refreshRoles}
+          existingRoles={existingRoles} // A role in use cannot be deleted
+        />
+      ),
     },
   ];
 
@@ -39,26 +80,46 @@ export default function Access() {
   };
 
   return (
-    <PageContainer title="权限控制">
+    <PageContainer
+      title={intl.formatMessage({
+        id: 'src.pages.Access.DE5C1B7D',
+        defaultMessage: '权限控制',
+      })}
+    >
       <Tabs
         tabBarExtraContent={
-          <Button type="primary" onClick={() => create(activeKey)}>
-            {activeKey === ActiveKey.ACCOUNTS ? '创建账户' : '创建角色'}
-          </Button>
+          access.acwrite ? (
+            <Button type="primary" onClick={() => create(activeKey)}>
+              {activeKey === ActiveKey.ACCOUNTS
+                ? intl.formatMessage({
+                    id: 'src.pages.Access.2FC6252B',
+                    defaultMessage: '创建账户',
+                  })
+                : intl.formatMessage({
+                    id: 'src.pages.Access.8D14D739',
+                    defaultMessage: '创建角色',
+                  })}
+            </Button>
+          ) : null
         }
         activeKey={activeKey}
         items={items}
         onChange={onChange}
       />
+
       <HandleAccountModal
         visible={accountVisible}
         setVisible={setAccountVisible}
         type={Type.CREATE}
+        successCallback={refreshAccounts}
       />
+
       <HandleRoleModal
         visible={modalVisible}
         setVisible={setModalVisible}
         type={Type.CREATE}
+        createdRoles={createdRoles} // Duplicate roles cannot be created
+        successCallback={refreshRoles}
       />
     </PageContainer>
   );
