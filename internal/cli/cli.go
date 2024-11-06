@@ -16,7 +16,9 @@ package cli
 import (
 	"github.com/spf13/cobra"
 
+	"github.com/oceanbase/ob-operator/internal/cli/cmd/backup"
 	"github.com/oceanbase/ob-operator/internal/cli/cmd/cluster"
+	"github.com/oceanbase/ob-operator/internal/cli/cmd/demo"
 	"github.com/oceanbase/ob-operator/internal/cli/cmd/install"
 	"github.com/oceanbase/ob-operator/internal/cli/cmd/tenant"
 	"github.com/oceanbase/ob-operator/internal/cli/cmd/update"
@@ -27,8 +29,8 @@ import (
 func NewCliCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "obocli",
-		Short: "OceanBase Operator CLI",
-		Long:  "OceanBase Operator CLI tool to manage OceanBase clusters, tenants, and backups.",
+		Short: "OceanBase Operator Cli",
+		Long:  "OceanBase Operator Cli tool to manage OceanBase clusters, tenants, and backup policies.",
 		Run: func(cmd *cobra.Command, args []string) {
 			if cmd.Flags().Changed("version") {
 				versionCmd := version.NewCmd()
@@ -41,8 +43,10 @@ func NewCliCmd() *cobra.Command {
 	cmd.AddCommand(version.NewCmd())
 	cmd.AddCommand(cluster.NewCmd())
 	cmd.AddCommand(tenant.NewCmd())
+	cmd.AddCommand(backup.NewCmd())
 	cmd.AddCommand(install.NewCmd())
 	cmd.AddCommand(update.NewCmd())
+	cmd.AddCommand(demo.NewCmd())
 	cmd.Flags().BoolP("version", "v", false, "Print the version of oceanbase cli")
 	return cmd
 }

@@ -817,3 +817,39 @@ func ListOBTenantRelatedEvents(c *gin.Context) ([]response.K8sEvent, error) {
 	logger.Debugf("Get related events of obtenant: %v", nn)
 	return events, nil
 }
+
+// @ID ListOBTenantUsers
+// @Tags OBTenant
+// @Summary List obtenant users
+// @Description List all the users under obtenant
+// @Accept application/json
+// @Produce application/json
+// @Success 200 object response.APIResponse{data=[]string}
+// @Failure 400 object response.APIResponse
+// @Failure 401 object response.APIResponse
+// @Failure 500 object response.APIResponse
+// @Param namespace path string true "obtenant namespace"
+// @Param name path string true "obtenant name"
+// @Router /api/v1/obtenants/{namespace}/{name}/users [GET]
+// @Security ApiKeyAuth
+func ListOBTenantUsers(_ *gin.Context) ([]string, error) {
+	return nil, httpErr.NewNotImplemented("")
+}
+
+// @ID ListOBTenantDatabases
+// @Tags OBTenant
+// @Summary List obtenant databases
+// @Description List all the databases under obtenant
+// @Accept application/json
+// @Produce application/json
+// @Success 200 object response.APIResponse{data=[]string}
+// @Failure 400 object response.APIResponse
+// @Failure 401 object response.APIResponse
+// @Failure 500 object response.APIResponse
+// @Param namespace path string true "obtenant namespace"
+// @Param name path string true "obtenant name"
+// @Router /api/v1/obtenants/{namespace}/{name}/databases [GET]
+// @Security ApiKeyAuth
+func ListOBTenantDatabases(_ *gin.Context) ([]string, error) {
+	return nil, httpErr.NewNotImplemented("")
+}

@@ -18,6 +18,7 @@ require (
 	github.com/gorilla/websocket v1.5.0
 	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/jmoiron/sqlx v1.3.5
+	github.com/manifoldco/promptui v0.9.0
 	github.com/mattn/go-isatty v0.0.20
 	github.com/mcuadros/go-defaults v1.2.0
 	github.com/mitchellh/mapstructure v1.5.0
@@ -62,6 +63,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20230717121745-296ad89f973d // indirect
 	github.com/chenzhuoyu/iasm v0.9.1 // indirect
+	github.com/chzyer/readline v1.5.1 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dennwc/varint v1.0.0 // indirect
 	github.com/edsrzf/mmap-go v1.1.0 // indirect
@@ -178,4 +180,38 @@ require (
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.1 // indirect
 	sigs.k8s.io/yaml v1.3.0 // indirect
+)
+
+replace (
+	k8s.io/api => k8s.io/api v0.29.3
+	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.29.3
+	k8s.io/apimachinery => k8s.io/apimachinery v0.29.3
+	k8s.io/apiserver => k8s.io/apiserver v0.29.3
+	k8s.io/cli-runtime => k8s.io/cli-runtime v0.29.3
+	k8s.io/client-go => k8s.io/client-go v0.29.3
+	k8s.io/cloud-provider => k8s.io/cloud-provider v0.29.3
+	k8s.io/cluster-bootstrap => k8s.io/cluster-bootstrap v0.29.3
+	k8s.io/code-generator => k8s.io/code-generator v0.29.3
+	k8s.io/component-base => k8s.io/component-base v0.29.3
+	k8s.io/component-helpers => k8s.io/component-helpers v0.29.3
+	k8s.io/controller-manager => k8s.io/controller-manager v0.29.3
+	k8s.io/cri-api => k8s.io/cri-api v0.29.3
+	k8s.io/cri-client => k8s.io/cri-client v0.29.3
+	k8s.io/csi-translation-lib => k8s.io/csi-translation-lib v0.29.3
+	k8s.io/dynamic-resource-allocation => k8s.io/dynamic-resource-allocation v0.29.3
+	k8s.io/endpointslice => k8s.io/endpointslice v0.29.3
+	k8s.io/kms => k8s.io/kms v0.29.3
+	k8s.io/kube-aggregator => k8s.io/kube-aggregator v0.29.3
+	k8s.io/kube-controller-manager => k8s.io/kube-controller-manager v0.29.3
+	k8s.io/kube-proxy => k8s.io/kube-proxy v0.29.3
+	k8s.io/kube-scheduler => k8s.io/kube-scheduler v0.29.3
+	k8s.io/kubectl => k8s.io/kubectl v0.29.3
+	k8s.io/kubelet => k8s.io/kubelet v0.29.3
+	k8s.io/legacy-cloud-providers => k8s.io/legacy-cloud-providers v0.29.3
+	k8s.io/metrics => k8s.io/metrics v0.29.3
+	k8s.io/mount-utils => k8s.io/mount-utils v0.29.3
+	k8s.io/pod-security-admission => k8s.io/pod-security-admission v0.29.3
+	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.29.3
+	k8s.io/sample-cli-plugin => k8s.io/sample-cli-plugin v0.29.3
+	k8s.io/sample-controller => k8s.io/sample-controller v0.29.3
 )

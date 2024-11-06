@@ -37,6 +37,7 @@ import (
 	"github.com/oceanbase/ob-operator/api/constants"
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
+	"github.com/oceanbase/ob-operator/internal/const/status/tenantstatus"
 )
 
 // log is for logging in this package.
@@ -49,8 +50,6 @@ func (r *OBTenantOperation) SetupWebhookWithManager(mgr ctrl.Manager) error {
 		For(r).
 		Complete()
 }
-
-// TODO(user): EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 
 //+kubebuilder:webhook:path=/mutate-oceanbase-oceanbase-com-v1alpha1-obtenantoperation,mutating=true,failurePolicy=fail,sideEffects=None,groups=oceanbase.oceanbase.com,resources=obtenantoperations,verbs=create;update,versions=v1alpha1,name=mobtenantoperation.kb.io,admissionReviewVersions=v1
 
@@ -70,7 +69,7 @@ func (r *OBTenantOperation) Default() {
 	} else if r.Spec.Type == constants.TenantOpSwitchover && r.Spec.Switchover != nil {
 		targetTenantName = r.Spec.Switchover.PrimaryTenant
 		secondaryTenantName = r.Spec.Switchover.StandbyTenant
-	} else if (r.Spec.Type == constants.TenantOpUpgrade || r.Spec.Type == constants.TenantOpReplayLog) && r.Spec.TargetTenant != nil {
+	} else if r.Spec.TargetTenant != nil {
 		targetTenantName = *r.Spec.TargetTenant
 	}
 	references := r.GetOwnerReferences()
@@ -227,11 +226,118 @@ func (r *OBTenantOperation) validateMutation() error {
 				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("targetTenant"), r.Spec.TargetTenant, "The target tenant is not a standby"))
 			}
 		}
+	case constants.TenantOpSetUnitNumber,
+		constants.TenantOpSetConnectWhiteList,
+		constants.TenantOpAddResourcePools,
+		constants.TenantOpModifyResourcePools,
+		constants.TenantOpDeleteResourcePools:
+		return r.validateNewOperations()
 	default:
 		allErrs = append(allErrs, field.Required(field.NewPath("spec").Child("type"), string(r.Spec.Type)+" type of operation is not supported"))
 	}
-	if len(allErrs) == 0 {
-		return nil
+	return allErrs.ToAggregate()
+}
+
+func (r *OBTenantOperation) validateNewOperations() error {
+	if r.Spec.TargetTenant == nil {
+		return field.Required(field.NewPath("spec").Child("targetTenant"), "name of targetTenant is required")
+	}
+	allErrs := field.ErrorList{}
+	obtenant := &OBTenant{}
+	err := clt.Get(context.Background(), types.NamespacedName{Name: *r.Spec.TargetTenant, Namespace: r.Namespace}, obtenant)
+	if err != nil {
+		if !apierrors.IsNotFound(err) {
+			allErrs = append(allErrs, field.InternalError(field.NewPath("spec").Child("targetTenant"), err))
+		} else {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("targetTenant"), r.Spec.TargetTenant, "The target tenant does not exist"))
+		}
+	}
+	if len(allErrs) != 0 {
+		return allErrs.ToAggregate()
+	}
+
+	if obtenant.Status.Status != tenantstatus.Running && !r.Spec.Force {
+		return field.Invalid(field.NewPath("spec").Child("targetTenant"), r.Spec.TargetTenant, "The target tenant is not in running status")
+	}
+
+	switch r.Spec.Type {
+	case constants.TenantOpSetUnitNumber:
+		if r.Spec.UnitNumber == 0 {
+			allErrs = append(allErrs, field.Required(field.NewPath("spec").Child("unitNumber"), "unitNumber is required"))
+		}
+	case constants.TenantOpSetConnectWhiteList:
+		if r.Spec.ConnectWhiteList == "" {
+			allErrs = append(allErrs, field.Required(field.NewPath("spec").Child("connectWhiteList"), "connectWhiteList is required"))
+		}
+	case constants.TenantOpAddResourcePools:
+		if len(r.Spec.AddResourcePools) == 0 {
+			allErrs = append(allErrs, field.Required(field.NewPath("spec").Child("addResourcePools"), "addResourcePools is required"))
+			break
+		}
+		obcluster := &OBCluster{}
+		err := clt.Get(context.Background(), types.NamespacedName{Name: obtenant.Spec.ClusterName, Namespace: r.Namespace}, obcluster)
+		if err != nil {
+			if !apierrors.IsNotFound(err) {
+				allErrs = append(allErrs, field.InternalError(field.NewPath("spec").Child("targetTenant"), err))
+			} else {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("targetTenant"), r.Spec.TargetTenant, "The target tenant's cluster "+obtenant.Spec.ClusterName+" does not exist"))
+			}
+			break
+		}
+		if obcluster.Spec.Topology == nil {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("targetTenant"), r.Spec.TargetTenant, "The target tenant's cluster "+obtenant.Spec.ClusterName+" does not have a topology"))
+			break
+		}
+		pools := make(map[string]any)
+		for _, pool := range obtenant.Spec.Pools {
+			pools[pool.Zone] = struct{}{}
+		}
+		for _, pool := range r.Spec.AddResourcePools {
+			if _, ok := pools[pool.Zone]; ok {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("addResourcePools"), r.Spec.AddResourcePools, "The resource pool already exists"))
+			}
+		}
+		if len(allErrs) != 0 {
+			return allErrs.ToAggregate()
+		}
+		zonesInOBCluster := make(map[string]any, len(obcluster.Spec.Topology))
+		for _, zone := range obcluster.Spec.Topology {
+			zonesInOBCluster[zone.Zone] = struct{}{}
+		}
+		for _, pool := range r.Spec.AddResourcePools {
+			if _, ok := zonesInOBCluster[pool.Zone]; !ok {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("addResourcePools"), r.Spec.AddResourcePools, "The target zone "+pool.Zone+" does not exist in the cluster"))
+			}
+		}
+	case constants.TenantOpModifyResourcePools:
+		if len(r.Spec.ModifyResourcePools) == 0 {
+			allErrs = append(allErrs, field.Required(field.NewPath("spec").Child("modifyResourcePools"), "modifyResourcePools is required"))
+			break
+		}
+		pools := make(map[string]any)
+		for _, pool := range obtenant.Spec.Pools {
+			pools[pool.Zone] = struct{}{}
+		}
+		for _, pool := range r.Spec.ModifyResourcePools {
+			if _, ok := pools[pool.Zone]; !ok {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("modifyResourcePools"), r.Spec.ModifyResourcePools, "The target resource pool in zone "+pool.Zone+" does not exist"))
+			}
+		}
+	case constants.TenantOpDeleteResourcePools:
+		if len(r.Spec.DeleteResourcePools) == 0 {
+			allErrs = append(allErrs, field.Required(field.NewPath("spec").Child("deleteResourcePools"), "deleteResourcePools is required"))
+			break
+		}
+		pools := make(map[string]any)
+		for _, pool := range obtenant.Spec.Pools {
+			pools[pool.Zone] = struct{}{}
+		}
+		for _, pool := range r.Spec.DeleteResourcePools {
+			if _, ok := pools[pool]; !ok {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("deleteResourcePools"), r.Spec.DeleteResourcePools, "The target resource pool in zone "+pool+" does not exist"))
+			}
+		}
+	default:
 	}
 	return allErrs.ToAggregate()
 }

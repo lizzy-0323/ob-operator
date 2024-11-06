@@ -14,23 +14,19 @@ See the Mulan PSL v2 for more details.
 package cluster
 
 import (
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
 	cluster "github.com/oceanbase/ob-operator/internal/cli/cluster"
-	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
-	"github.com/oceanbase/ob-operator/internal/clients"
-	oberr "github.com/oceanbase/ob-operator/pkg/errors"
+	"github.com/oceanbase/ob-operator/internal/cli/utils"
 )
 
 // NewCreateCmd create an ob cluster
 func NewCreateCmd() *cobra.Command {
 	o := cluster.NewCreateOptions()
-	logger := cmdUtil.GetDefaultLoggerInstance()
+	logger := utils.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
 		Use:     "create <cluster_name>",
-		Short:   "Create ob cluster",
-		Aliases: []string{"c"},
+		Short:   "Create an ob cluster",
 		Args:    cobra.ExactArgs(1),
 		PreRunE: o.Parse,
 		Run: func(cmd *cobra.Command, args []string) {
@@ -40,15 +36,11 @@ func NewCreateCmd() *cobra.Command {
 			if err := o.Validate(); err != nil {
 				logger.Fatalln(err)
 			}
-			obcluster := cluster.CreateOBClusterInstance(o)
-			if err := clients.CreateSecretsForOBCluster(cmd.Context(), obcluster, o.RootPassword); err != nil {
-				logger.Fatalln(errors.Wrap(err, "Create secrets for obcluster"))
-			}
-			_, err := clients.CreateOBCluster(cmd.Context(), obcluster)
+			obcluster, err := cluster.CreateOBCluster(cmd.Context(), o)
 			if err != nil {
-				logger.Fatalln(oberr.NewInternal(err.Error()))
+				logger.Fatalln(err)
 			}
-			logger.Printf("Create obcluster instance: %s", o.ClusterName)
+			logger.Printf("Create OBCluster instance: %s", o.ClusterName)
 			logger.Printf("Run `echo $(kubectl get secret %s -o jsonpath='{.data.password}'|base64 --decode)` to get the secrets", obcluster.Spec.UserSecrets.Root)
 		},
 	}

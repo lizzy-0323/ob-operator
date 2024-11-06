@@ -84,4 +84,8 @@ func InitRoutes(router *gin.Engine) {
 	v1.InitAlarmRoutes(v1Group)
 	v1.InitOBProxyRoutes(v1Group)
 	v1.InitAccessControlRoutes(v1Group)
+	v1.InitInspectionRoutes(v1Group)
+	v1.InitSqlRoutes(v1Group)
+	v1.InitJobRoutes(v1Group)
+	v1.InitStorageRoutes(v1Group)
 }

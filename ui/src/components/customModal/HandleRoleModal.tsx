@@ -1,13 +1,16 @@
 import { access } from '@/api';
 import type { AcCreateRoleParam, AcPolicy, AcRole } from '@/api/generated';
+import { ACCESS_ROLES_LIST } from '@/constants/access';
 import { Type } from '@/pages/Access/type';
 import { intl } from '@/utils/intl';
+import { findByValue } from '@oceanbase/util';
 import { useModel } from '@umijs/max';
 import type { CheckboxProps } from 'antd';
 import { Checkbox, Col, Form, Input, Row, message } from 'antd';
 import { pick, uniqBy } from 'lodash';
 import { useEffect, useState } from 'react';
 import CustomModal from '.';
+import IconTip from '../IconTip';
 
 interface HandleRoleModalProps {
   visible: boolean;
@@ -91,12 +94,23 @@ function PermissionSelect({
       );
     }
   };
+
   const handleSelected = (val: string[], target: string) => {
+    let permissions = [...val];
     setCheckedList((preCheckedList) => {
       const newList = [...preCheckedList];
       newList.forEach((item) => {
         if (item.domain === target) {
-          item.checked = val;
+          if (val.length === 1 && val[0] === 'write') {
+            if (item.checked.length === 2) {
+              // Selected Read
+              permissions = [];
+            } else {
+              // Selected Write
+              permissions.push('read');
+            }
+          }
+          item.checked = permissions;
         }
       });
       return newList;
@@ -145,7 +159,12 @@ function PermissionSelect({
       {fetchData.map((item, index) => (
         <div key={index}>
           <Row gutter={[8, 16]}>
-            <Col span={8}> {item.domain}</Col>
+            <Col span={8}>
+              <IconTip
+                  tip={findByValue(ACCESS_ROLES_LIST, item.domain).descriptions}
+                  content={findByValue(ACCESS_ROLES_LIST, item.domain).label}
+                />
+            </Col>
             <Col span={16}>
               <Checkbox.Group
                 options={options}
@@ -320,10 +339,16 @@ export default function HandleRoleModal({
             {
               validator: (_, permissions) => {
                 if (!permissions || !permissions.length) {
-                  return Promise.reject('权限不能为空！');
+                  return Promise.reject(
+                    intl.formatMessage({
+                      id: 'src.components.customModal.2389B108',
+                      defaultMessage: '权限不能为空！',
+                    }),
+                  );
                 }
                 return Promise.resolve();
               },
+              validateTrigger: 'onBlur',
             },
           ]}
           name={'permissions'}

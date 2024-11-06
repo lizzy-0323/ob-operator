@@ -85,17 +85,19 @@ func buildOBClusterOverview(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 		}
 	}
 	return &response.OBClusterOverview{
-		UID:          string(obcluster.UID),
-		Namespace:    obcluster.Namespace,
-		Name:         obcluster.Name,
-		ClusterName:  obcluster.Spec.ClusterName,
-		ClusterId:    obcluster.Spec.ClusterId,
+		OBClusterMeta: response.OBClusterMeta{
+			UID:         string(obcluster.UID),
+			Namespace:   obcluster.Namespace,
+			Name:        obcluster.Name,
+			ClusterName: obcluster.Spec.ClusterName,
+			ClusterId:   obcluster.Spec.ClusterId,
+			Mode:        clusterMode,
+		},
 		Status:       getStatisticStatus(obcluster),
 		StatusDetail: obcluster.Status.Status,
 		CreateTime:   obcluster.ObjectMeta.CreationTimestamp.Unix(),
 		Image:        obcluster.Status.Image,
 		Topology:     topology,
-		Mode:         clusterMode,
 	}, nil
 }
 
@@ -207,9 +209,10 @@ func buildOBClusterTopologyResp(ctx context.Context, obcluster *v1alpha1.OBClust
 					for _, req := range term.MatchExpressions {
 						affinities = append(affinities, modelcommon.AffinitySpec{
 							Type: modelcommon.NodeAffinityType,
-							KVPair: modelcommon.KVPair{
-								Key:   req.Key,
-								Value: req.Values[0],
+							SelectorExpression: modelcommon.SelectorExpression{
+								Key:      req.Key,
+								Operator: string(req.Operator),
+								Values:   req.Values,
 							},
 						})
 					}
@@ -219,9 +222,10 @@ func buildOBClusterTopologyResp(ctx context.Context, obcluster *v1alpha1.OBClust
 					for _, req := range term.LabelSelector.MatchExpressions {
 						affinities = append(affinities, modelcommon.AffinitySpec{
 							Type: modelcommon.PodAffinityType,
-							KVPair: modelcommon.KVPair{
-								Key:   req.Key,
-								Value: req.Values[0],
+							SelectorExpression: modelcommon.SelectorExpression{
+								Key:      req.Key,
+								Operator: string(req.Operator),
+								Values:   req.Values,
 							},
 						})
 					}
@@ -231,9 +235,10 @@ func buildOBClusterTopologyResp(ctx context.Context, obcluster *v1alpha1.OBClust
 					for _, req := range term.LabelSelector.MatchExpressions {
 						affinities = append(affinities, modelcommon.AffinitySpec{
 							Type: modelcommon.PodAntiAffinityType,
-							KVPair: modelcommon.KVPair{
-								Key:   req.Key,
-								Value: req.Values[0],
+							SelectorExpression: modelcommon.SelectorExpression{
+								Key:      req.Key,
+								Operator: string(req.Operator),
+								Values:   req.Values,
 							},
 						})
 					}
@@ -376,8 +381,8 @@ func buildOBClusterTopology(topology []param.ZoneTopology) []apitypes.OBZoneTopo
 					nodeSelectorTerm := corev1.NodeSelectorTerm{
 						MatchExpressions: []corev1.NodeSelectorRequirement{{
 							Key:      kv.Key,
-							Operator: corev1.NodeSelectorOpIn,
-							Values:   []string{kv.Value},
+							Operator: corev1.NodeSelectorOperator(kv.Operator),
+							Values:   kv.Values,
 						}},
 					}
 					topo.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms = append(topo.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms, nodeSelectorTerm)
@@ -391,8 +396,8 @@ func buildOBClusterTopology(topology []param.ZoneTopology) []apitypes.OBZoneTopo
 						LabelSelector: &metav1.LabelSelector{
 							MatchExpressions: []metav1.LabelSelectorRequirement{{
 								Key:      kv.Key,
-								Operator: metav1.LabelSelectorOpIn,
-								Values:   []string{kv.Value},
+								Operator: metav1.LabelSelectorOperator(kv.Operator),
+								Values:   kv.Values,
 							}},
 						},
 					}
@@ -407,8 +412,8 @@ func buildOBClusterTopology(topology []param.ZoneTopology) []apitypes.OBZoneTopo
 						LabelSelector: &metav1.LabelSelector{
 							MatchExpressions: []metav1.LabelSelectorRequirement{{
 								Key:      kv.Key,
-								Operator: metav1.LabelSelectorOpIn,
-								Values:   []string{kv.Value},
+								Operator: metav1.LabelSelectorOperator(kv.Operator),
+								Values:   kv.Values,
 							}},
 						},
 					}

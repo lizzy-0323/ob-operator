@@ -50,7 +50,7 @@ const ClusterOverview: React.FC = () => {
           defaultMessage: '删除成功',
         }),
       );
-      history.push('/cluster');
+      history.replace('/cluster');
     }
   };
 
@@ -158,14 +158,12 @@ const ClusterOverview: React.FC = () => {
         {clusterDetail && (
           <ServerTable servers={clusterDetail.servers as API.Server[]} />
         )}
-        {clusterDetail && (access.systemread || access.systemwrite) ? (
-          <Col span={24}>
-            <EventsTable
-              objectType="OBCLUSTER"
-              name={clusterDetail?.info?.name}
-            />
-          </Col>
-        ) : null}
+        <Col span={24}>
+          <EventsTable
+            objectType="OBCLUSTER"
+            name={clusterDetail?.info?.name}
+          />
+        </Col>
       </Row>
       <OperateModal
         type={modalType.current}

@@ -4,7 +4,7 @@ PROJECT=oceanbase-dashboard
 PROCESSOR=4
 PWD ?= $(shell pwd)
 
-DASHBOARD_VERSION ?= 0.3.0
+DASHBOARD_VERSION ?= 0.3.1
 DASHBOARD_IMG ?= quay.io/oceanbase/oceanbase-dashboard:${DASHBOARD_VERSION}
 COMMIT_HASH ?= $(shell git rev-parse --short HEAD)
 BUILD_TIMESTAMP ?= $(shell date '+%Y%m%d%H%M%S')
@@ -22,7 +22,7 @@ GOTEST_PACKAGES = $(shell go list ./... | grep -v -f tests/excludes.txt)
 UNFMT_FILES ?= $(shell gofmt -l -s $(filter-out , $(GOFILES)))
 
 .PHONY: dashboard-doc-gen
-dashboard-doc: dashboard-dep-install ## Generate swagger docs
+dashboard-doc-gen: ## Generate swagger docs
 	swag init -g cmd/dashboard/main.go -o internal/dashboard/generated/swagger
 
 .PHONY: dashboard-build
@@ -31,7 +31,7 @@ dashboard-build: dashboard-bindata-gen dashboard-doc-gen ## Build oceanbase-dash
 
 .PHONY: dashboard-bindata-gen
 dashboard-bindata-gen: ## Generate bindata
-	go-bindata -o internal/dashboard/generated/bindata/bindata.go -pkg bindata internal/assets/...
+	go-bindata -o internal/dashboard/generated/bindata/bindata.go -pkg bindata internal/assets/dashboard/...
 
 .PHONY: dashboard-clean
 dashboard-clean: ## Clean build
@@ -48,7 +48,7 @@ dashboard-run: ## Run oceanbase-dashboard in dev mode
 	go run $(BUILD_FLAG) ./cmd/dashboard/main.go
 
 .PHONY: dashboard-docker-build
-dashboard-docker-build: dashboard-bindata-gen dashboard-doc-gen ## build oceanbase-dashboard image
+dashboard-docker-build: ## build oceanbase-dashboard image
 	docker build -t ${DASHBOARD_IMG} -f build/Dockerfile.dashboard .
 
 .PHONY: dashboard-docker-push
