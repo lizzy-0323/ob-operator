@@ -46,7 +46,7 @@ Helm Chart parameterizes the namespace in which ob-operator is deployed, allowin
 ```shell
 helm repo add ob-operator https://oceanbase.github.io/ob-operator/
 helm repo update
-helm install ob-operator ob-operator/ob-operator --namespace=oceanbase-system --create-namespace --version=2.3.0
+helm install ob-operator ob-operator/ob-operator --namespace=oceanbase-system --create-namespace
 ```
 
 #### Using terraform
@@ -202,7 +202,7 @@ OceanBase v3.x versions are currently not supported by ob-operator.
 
 ob-operator is built using the [kubebuilder](https://book.kubebuilder.io/introduction) project, so the development and runtime environment are similar to it.
 
-- To build ob-operator: Go version 1.20 or higher is required.
+- To build ob-operator: Go version 1.22 or higher is required.
 - To run ob-operator: Kubernetes cluster and kubectl version 1.18 or higher are required. We examined the functionalities on k8s cluster of version from 1.23 ~ 1.28 and ob-operator performs well.
 - If using Docker as the container runtime for the cluster, Docker version 17.03 or higher is required. We tested building and running ob-operator with Docker 18.
 

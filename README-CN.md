@@ -45,7 +45,7 @@ Helm Chart 将 ob-operator 部署的命名空间进行了参数化，可在安�
 ```shell
 helm repo add ob-operator https://oceanbase.github.io/ob-operator/
 helm repo update
-helm install ob-operator ob-operator/ob-operator --namespace=oceanbase-system --create-namespace --version=2.3.0
+helm install ob-operator ob-operator/ob-operator --namespace=oceanbase-system --create-namespace
 ```
 
 #### 使用 terraform
@@ -200,7 +200,7 @@ ob-operator 支持 OceanBase v4.x 版本。某些特性需要特定的 OceanBase
 
 ob-operator 使用 [kubebuilder](https://book.kubebuilder.io/introduction) 项目进行构建，所以开发和运行环境与其相近。
 
-- 构建 ob-operator 需要 Go 1.20 版本及以上；
+- 构建 ob-operator 需要 Go 1.22 版本及以上；
 - 运行 ob-operator 需要 Kubernetes 集群和 kubectl 的版本在 1.18 及以上。我们在 1.23 ~ 1.28 版本的 K8s 集群上检验过 ob-operator 的运行是符合预期的。
 - 如果使用 Docker 作为集群的容器运行时，需要 Docker 17.03 及以上版本；我们的构建和运行环境使用的 Docker 版本为 18。
 
